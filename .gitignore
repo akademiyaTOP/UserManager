@@ -1,0 +1,48 @@
+# Общие временные файлы / бинарники
+*.obj
+*.o
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+*.exe
+*.pdb
+*.ilk
+*.log
+
+# CMake: артефакты сборки
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# Директории сборки
+build/
+build-*/
+cmake-build-*/
+out/
+bin/
+debug/
+release/
+
+# Qt Creator
+*.user
+*.user.*
+*.pro.user
+*.pro.user.*
+
+# Visual Studio
+.vs/
+*.vcxproj
+*.vcxproj.filters
+*.sln
+
+# IDE
+.idea/
+.vscode/
+
+# Системный мусор
+.DS_Store
+Thumbs.db
