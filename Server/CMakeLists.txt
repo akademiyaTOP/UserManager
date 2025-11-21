@@ -2,6 +2,8 @@ add_executable(Server
 	main.cpp
         server.h
         server.cpp
+	clienthandler.h
+	clienthandler.cpp
 )
 
 target_link_libraries(Server
