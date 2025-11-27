@@ -4,6 +4,7 @@ add_executable(Server
         server.cpp
 	clienthandler.h
 	clienthandler.cpp
+        database.h database.cpp
 )
 
 target_link_libraries(Server

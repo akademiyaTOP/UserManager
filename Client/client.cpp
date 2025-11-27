@@ -34,6 +34,11 @@ void Client::onConnected()
 
 void Client::sendJson(const QJsonObject &obj)
 {
+    if (m_socket->state() != QAbstractSocket::ConnectedState) {
+        qDebug() << "Client: not connected";
+        return;
+    }
+
     QJsonDocument doc(obj);
     QByteArray data = doc.toJson(QJsonDocument::Compact);
 
@@ -46,8 +51,21 @@ void Client::sendJson(const QJsonObject &obj)
 void Client::onReadyRead()
 {
     QByteArray data = m_socket->readAll();
-
     qDebug() << "Client received: " << data;
+
+    QJsonParseError parseError;
+    QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
+    if (parseError.error != QJsonParseError::NoError) {
+        qDebug() << "Client JSON parse error: " << parseError.errorString();
+        return;
+    }
+
+    QJsonObject responce = doc.object();
+    QString status = responce.value("status").toString();
+    QString message = responce.value("message").toString();
+
+    qDebug() << "Client parsed responce. Status: " << status
+             << "Message: " << message;
 }
 
 void Client::onDisconnected()

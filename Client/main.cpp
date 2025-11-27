@@ -17,7 +17,7 @@ int main (int argc, char *argv[])
 
     QTimer::singleShot(1000, [&client](){
         QJsonObject obj;
-        obj["command"] = "ping";
+        obj["action"] = "ping";     // {"action": "ping"}
         client.sendJson(obj);
     });
 

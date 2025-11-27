@@ -9,7 +9,17 @@ ClientHandler::ClientHandler(qintptr descriptor, QObject* parent)
 void ClientHandler::run()
 {
     m_socket = new QTcpSocket();
-    m_socket->setSocketDescriptor(m_descriptor);
+
+    if (!m_socket->setSocketDescriptor(m_descriptor)) {
+        qDebug() << "ClientHandler: failed to set socket descriptor";
+        m_socket->deleteLater();
+        m_socket = nullptr;
+        return;
+    }
+
+    qDebug() << "ClientHandler start " <<QThread::currentThread();
+
+    //m_socket->setSocketDescriptor(m_descriptor);
 
     connect(m_socket, &QTcpSocket::disconnected,
             this, &ClientHandler::onDisconnected);
@@ -25,22 +35,58 @@ void ClientHandler::run()
 
 void ClientHandler::onReadyRead()
 {
+    if(!m_socket)
+        return;
+
+
     QByteArray data = m_socket->readAll();
-    QJsonDocument doc = QJsonDocument::fromJson(data);
-    QJsonObject obj = doc.object();
+    qDebug() << "Server received " << data;
 
-    QString cmd = obj["command"].toString();
+    QJsonParseError parseError;
+    QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
+    if (parseError.error != QJsonParseError::NoError) {
+        qDebug() << "Server JSON parse error: " << parseError.errorString();
 
-    if (cmd == "ping")
-    {
-        QJsonObject resp{{"status", "ok"}};
-        m_socket->write(QJsonDocument(resp).toJson());
+        QJsonObject errResponce;
+        errResponce["status"] = "error";
+        errResponce["message"] = QStringLiteral("Invalid JSON: ") + parseError.errorString();
+
+        QByteArray out = QJsonDocument(errResponce).toJson(QJsonDocument::Compact);
+        m_socket->write(out);
+        m_socket->flush();
+        return;
     }
+
+    QJsonObject request = doc.object();
+    const QString action = request.value("action").toString();
+
+    QJsonObject responce;
+
+    if (action == "ping") {
+        responce["status"] = "ok";
+        responce["message"] = "pong";
+    } else {
+        responce["status"] = "error";
+        responce["message"] = QStringLiteral("unkown action: ") + action;
+    }
+
+    QJsonDocument respDoc(responce);
+    QByteArray out = QJsonDocument(responce).toJson(QJsonDocument::Compact);
+    m_socket->write(out);
+    m_socket->flush();
+
+    qDebug() << "Server sent:" << out;
 }
 
 void ClientHandler::onDisconnected()
 {
-    m_socket->deleteLater();
+    qDebug() << "ClientHandler: client disconnected";
+
+    if (m_socket) {
+        m_socket->deleteLater();
+        m_socket = nullptr;
+    }
+
     quit();
 }
 
