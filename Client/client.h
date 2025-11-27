@@ -1,5 +1,5 @@
-#ifndef CLIENT_H
-#define CLIENT_H
+#pragma once
+
 #include <QObject>
 #include <QTcpSocket>
 #include <QJsonObject>
@@ -22,4 +22,4 @@ private:
     QTcpSocket* m_socket;
 };
 
-#endif // CLIENT_H
+// CLIENT_H

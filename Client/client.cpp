@@ -18,6 +18,12 @@ Client::Client(QObject* parent)
 
 void Client::connectToServer(const QString& host, quint16 port)
 {
+    if (m_socket->state() == QAbstractSocket::ConnectedState) {
+        qDebug() << "Client: already connected";
+        return;
+    }
+
+    qDebug() << "Client connecting to " << host << ":" << port;
     m_socket->connectToHost(host, port);
 }
 
