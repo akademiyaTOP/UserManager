@@ -11,9 +11,11 @@ Server::Server(QObject* parent) : QTcpServer(parent)
 
 void Server::incomingConnection(qintptr descriptor)
 {
-    auto* handler = new ClientHandler(descriptor, this);
+    auto* handler = new ClientHandler(descriptor,  m_db, this);
     if(handler == nullptr)
         return;
 
+
+    connect(handler, QThread::finished, this, QObject::deleteLater);
     handler->start();
 }

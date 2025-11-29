@@ -22,6 +22,7 @@ private slots:
 private:
     qintptr m_descriptor;
     QTcpSocket* m_socket;
+    Database& m_db;
 
 };
 

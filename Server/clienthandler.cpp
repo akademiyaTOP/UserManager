@@ -27,7 +27,6 @@ void ClientHandler::run()
     connect(m_socket, &QTcpSocket::readyRead,
             this, &ClientHandler::onReadyRead);
 
-
     exec();
     // while(true)
     //     жду события -> вызываю слоты
@@ -76,8 +75,18 @@ void ClientHandler::onReadyRead()
     m_socket->flush();
 
     qDebug() << "Server sent:" << out;
-}
 
+    if (action == "add_user")
+        handlerAddUser(obj);
+    else if (action == "delete_user")
+        handlerDeleteUser(obj);
+    else if (action == "edit_user")
+        handleEditUser(obj);
+    else if (action == "get_users")
+        handleGetUsers();
+    else
+        sendError("Unkown action: " + action);
+}
 void ClientHandler::onDisconnected()
 {
     qDebug() << "ClientHandler: client disconnected";
@@ -90,4 +99,43 @@ void ClientHandler::onDisconnected()
     quit();
 }
 
+void ClientHandler::handlerAddUser(const QJsonObject& obj)
+{
+    if (!responce.contains("username") || !responce.contains("email")) {
+        sendError("nichego netu");
+        return;
+    }
 
+    QString username = obj["username"].toString();
+    QString email = obj["email"].toString();
+
+    bool ok = db.addUser(username, email);
+
+    if (!ok) {
+        qDebug() << "Failed to addUser";
+        return;
+    }
+
+    sendSeccuess();
+}
+
+void ClientHandler::sendJson(const QJsonObject& obj)
+{
+    QJsonDocument doc(obj);
+    m_socket->write(doc.toJson(QJsonDocument::Compact));
+}
+
+void ClientHandler::sendSeccuess()
+{
+    QJsonObject obj;
+    obj["status"] = "success";
+    sendJson();
+}
+
+void ClientHandler::sendError(const QString& message)
+{
+    QJsonObject obj;
+    obj["status"] = "error";
+    obj["message"] = message;
+    sendJson(obj);
+}

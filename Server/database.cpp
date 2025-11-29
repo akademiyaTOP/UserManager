@@ -21,5 +21,42 @@ DataBase::DataBase()
 
     qDebug() << "Database: connection opened";
 
+    QSqlQuery query(db);
+    const QString createTableSql =
+        "CREATE TABLE IF NOT EXISTS users ("
+        "id SERIAL PRIMARY KEY,"
+        "username TEXT NOT NULL,"
+        "email TEXT NOT NULL"
+        ")";
+
+    if (!query.exec(createTableSql))
+    {
+        qDebug() << "Database: failed to create table 'users':"
+                 << query.lastError().text();
+    } else {
+        qDebug() << "Database table 'users' is create";
+    }
+
 
 }
+
+bool DataBase::addUser(const QString username, const QString &email)
+{
+    QMutexLocker locker(&dbMutex);
+
+
+    QSqlQuery query(db);
+    query.prepare("INSERT INTO users (username, email) VALUES (:username, :email)");
+    query.bindValue(":username", username);
+    query.bindValue(":email", email);
+
+
+    if(!query.exec()) {
+        qDebug() << "Database adduser error:"
+                 << query.lastError().text();
+        return false;
+    }
+    return true;
+}
+
+
