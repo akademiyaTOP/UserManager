@@ -12,6 +12,9 @@ public:
 
 protected:
     void incomingConnection(qintptr socketDescriptor) override;
+
+private:
+    Database m_db;
 };
 
 

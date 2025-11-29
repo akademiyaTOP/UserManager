@@ -1,5 +1,6 @@
 #include "client.h"
 #include <QJsonDocument>
+#include <QJsonParseError>
 #include <qDebug>
 
 Client::Client(QObject* parent)
@@ -61,8 +62,8 @@ void Client::onReadyRead()
     }
 
     QJsonObject responce = doc.object();
-    QString status = responce.value("status").toString();
-    QString message = responce.value("message").toString();
+    const QString status = responce.value("status").toString();
+    const QString message = responce.value("message").toString();
 
     qDebug() << "Client parsed responce. Status: " << status
              << "Message: " << message;

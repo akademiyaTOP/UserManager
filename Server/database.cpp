@@ -59,4 +59,7 @@ bool DataBase::addUser(const QString username, const QString &email)
     return true;
 }
 
+QJsonArray DataBase::getUsers()
+{
 
+}

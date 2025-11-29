@@ -1,9 +1,12 @@
 #include "clienthandler.h"
+#include <QJsonParseError>
+#include <QDebug>
 
-ClientHandler::ClientHandler(qintptr descriptor, QObject* parent)
+ClientHandler::ClientHandler(qintptr descriptor, DataBase &db, QObject* parent)
     : QThread(parent),
       m_descriptor(descriptor),
-      m_socket(nullptr)
+      m_socket(nullptr),
+    m_db(db)
 {}
 
 void ClientHandler::run()
@@ -18,8 +21,6 @@ void ClientHandler::run()
     }
 
     qDebug() << "ClientHandler start " <<QThread::currentThread();
-
-    //m_socket->setSocketDescriptor(m_descriptor);
 
     connect(m_socket, &QTcpSocket::disconnected,
             this, &ClientHandler::onDisconnected);
@@ -37,44 +38,26 @@ void ClientHandler::onReadyRead()
     if(!m_socket)
         return;
 
-
     QByteArray data = m_socket->readAll();
     qDebug() << "Server received " << data;
 
     QJsonParseError parseError;
     QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
-        qDebug() << "Server JSON parse error: " << parseError.errorString();
-
-        QJsonObject errResponce;
-        errResponce["status"] = "error";
-        errResponce["message"] = QStringLiteral("Invalid JSON: ") + parseError.errorString();
-
-        QByteArray out = QJsonDocument(errResponce).toJson(QJsonDocument::Compact);
-        m_socket->write(out);
-        m_socket->flush();
+        sendError(QStringLiteral("Invalid JSON: ") + parseError.errorString());
         return;
     }
 
     QJsonObject request = doc.object();
     const QString action = request.value("action").toString();
 
-    QJsonObject responce;
-
     if (action == "ping") {
+        QJsonObject responce;
         responce["status"] = "ok";
         responce["message"] = "pong";
-    } else {
-        responce["status"] = "error";
-        responce["message"] = QStringLiteral("unkown action: ") + action;
+        sendJson(responce);
+        return;
     }
-
-    QJsonDocument respDoc(responce);
-    QByteArray out = QJsonDocument(responce).toJson(QJsonDocument::Compact);
-    m_socket->write(out);
-    m_socket->flush();
-
-    qDebug() << "Server sent:" << out;
 
     if (action == "add_user")
         handlerAddUser(obj);
@@ -102,30 +85,40 @@ void ClientHandler::onDisconnected()
 void ClientHandler::handlerAddUser(const QJsonObject& obj)
 {
     if (!responce.contains("username") || !responce.contains("email")) {
-        sendError("nichego netu");
+        sendError("nichego netu, ni email, ni username");
         return;
     }
 
-    QString username = obj["username"].toString();
-    QString email = obj["email"].toString();
+    const QString username = obj.value("username").toString();
+    const QString email = obj.value("email").toString();
 
-    bool ok = db.addUser(username, email);
-
-    if (!ok) {
-        qDebug() << "Failed to addUser";
+    if (!m_db.addUser(username, email)) {
+        sendError("Failed to addUser");
         return;
     }
 
-    sendSeccuess();
+    QJsonObject responce;
+    responce["status"] = "success";
+    responce["message"] = "User added seccessfully";
+    responce["users"] = m_db.getUsers();
+    sendJson(responce);
 }
 
 void ClientHandler::sendJson(const QJsonObject& obj)
 {
+    if (!m_socket)
+        return;
+
     QJsonDocument doc(obj);
-    m_socket->write(doc.toJson(QJsonDocument::Compact));
+    QByteArray out = doc.toJson(QJsonDocument::Compact);
+
+    m_socket->write(out);
+    m_socket->flush();
+
+    qDebug() << "Server sent:" << out;
 }
 
-void ClientHandler::sendSeccuess()
+void ClientHandler::sendSuccess()
 {
     QJsonObject obj;
     obj["status"] = "success";

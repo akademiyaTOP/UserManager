@@ -1,7 +1,7 @@
 #include <QApplication>
 #include <QWidget>
-#include "client.h"
 #include <QTimer>
+#include "client.h"
 
 int main (int argc, char *argv[])
 {

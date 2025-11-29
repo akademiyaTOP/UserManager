@@ -5,12 +5,16 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
+#include "database.h"
+
 class ClientHandler : public QThread
 {
     Q_OBJECT
 
 public:
-    explicit ClientHandler(qintptr descriptor, QObject* parent = nullptr);
+    explicit ClientHandler(qintptr descriptor,
+                           DataBase& db,
+                           QObject* parent = nullptr);
 
 protected:
     void run() override; //запуск потока
@@ -20,10 +24,16 @@ private slots:
     void onReadyRead();
 
 private:
+    void handlerAddUser(const QJsonObject& obj);
+
+    void sendJson(const QJsonObject& obj);
+    void sendSuccess();
+    void sendError(const QString& message);
+
+private:
     qintptr m_descriptor;
     QTcpSocket* m_socket;
     Database& m_db;
-
 };
 
 #endif // CLIENTHANDLER_H
