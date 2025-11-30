@@ -1,39 +1,40 @@
 #ifndef CLIENTHANDLER_H
 #define CLIENTHANDLER_H
-#include <QTcpSocket>
+
 #include <QThread>
-#include <QJsonDocument>
+#include <QTcpSocket>
 #include <QJsonObject>
 
-#include "database.h"
+class Database;
 
+// Один поток на одного клиента. Внутри — QTcpSocket + сигналы/слоты.
 class ClientHandler : public QThread
 {
     Q_OBJECT
-
 public:
-    explicit ClientHandler(qintptr descriptor,
-                           DataBase& db,
-                           QObject* parent = nullptr);
+    explicit ClientHandler(qintptr socketDescriptor, Database& database, QObject* parent = nullptr);
 
 protected:
-    void run() override; //запуск потока
+    void run() override;
 
 private slots:
-    void onDisconnected();
     void onReadyRead();
+    void onDisconnected();
 
 private:
-    void handlerAddUser(const QJsonObject& obj);
+    // Обработчики конкретных команд протокола:
+    QJsonObject handlePing      (const QJsonObject& request);
+    QJsonObject handleAddUser   (const QJsonObject& request);
+    QJsonObject handleDeleteUser(const QJsonObject& request);  // ← ДЗ
+    QJsonObject handleEditUser  (const QJsonObject& request);
+    QJsonObject handleGetUsers  (const QJsonObject& request);
 
-    void sendJson(const QJsonObject& obj);
-    void sendSuccess();
-    void sendError(const QString& message);
+    QJsonObject makeError(const QString& message);
 
 private:
-    qintptr m_descriptor;
-    QTcpSocket* m_socket;
-    Database& m_db;
+    qintptr m_descriptor;  // socketDescriptor из incomingConnection
+    QTcpSocket* m_socket;      // сокет, живущий в этом потоке
+    Database& db;            // ссылка на общий объект базы
 };
 
 #endif // CLIENTHANDLER_H

@@ -2,19 +2,20 @@
 #define DATABASE_H
 
 #include <QSqlDatabase>
-#include <QSqlError>
 #include <QSqlQuery>
+#include <QSqlError>
 #include <QJsonArray>
 #include <QMutex>
 
-class DataBase
+// Класс-обёртка над PostgreSQL, один на весь сервер.
+class Database
 {
 public:
-    DataBase();
+    Database();
 
-    bool addUser(const QString username, const QString& email);
+    bool addUser   (const QString& username, const QString& email);
     bool deleteUser(int userId);
-    bool editUser(int userId, const QString& newUsername, const QString& newEmail);
+    bool editUser  (int userId, const QString& newUsername, const QString& newEmail);
     QJsonArray getUsers();
 
 private:

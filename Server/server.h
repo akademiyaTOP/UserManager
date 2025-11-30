@@ -1,5 +1,6 @@
 #ifndef SERVER_H
 #define SERVER_H
+#include "database.h"
 #include <QTcpServer>
 #include <QObject>
 
@@ -14,7 +15,7 @@ protected:
     void incomingConnection(qintptr socketDescriptor) override;
 
 private:
-    Database m_db;
+    Database db;
 };
 
 

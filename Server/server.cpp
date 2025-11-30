@@ -16,7 +16,7 @@ void Server::incomingConnection(qintptr descriptor)
 {
     qDebug() << "Server: new connection, descriptor =" << descriptor;
 
-    auto* handler = new ClientHandler(descriptor,  m_db, this);
+    auto* handler = new ClientHandler(descriptor,  db, this);
     if(handler == nullptr)
         return;
 
